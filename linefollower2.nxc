@@ -1,0 +1,70 @@
+int DIFF = 10;
+
+
+int NaSciezce(int PATH_VAL)
+{
+ if((Sensor(IN_3) > PATH_VAL-DIFF)&&(Sensor(IN_3)< PATH_VAL+DIFF)) return 1;
+ else return 0;
+}
+
+int init() {
+SetSensorColorBlue(IN_3);
+ int PATH_VAL=Sensor(IN_3);
+ int R=15;
+ int V=75;
+
+
+ Wait(1000); NumOut(0,0,3);
+ Wait(1000); NumOut(0,0,2);
+ Wait(1000); NumOut(0,0,1);
+ Wait(1000); TextOut(0,0,"START!");
+ return PATH_VAL;
+}
+
+task main() {
+int V = 75;
+int A = 35;
+int time_to_search = 5000;
+int path_val = init();
+char LEFT = "L";
+char RIGHT = "R";
+char last_curve = LEFT;
+
+
+do {
+while (NaSciezce(path_val)) {
+      OnFwd(OUT_BC, V);
+}
+
+while (!NaSciezce(path_val)) {
+   int i = 0;
+      for (i; i<time_to_search; i++) {
+        OnFwd(OUT_B, 0); OnFwd(OUT_C, A);
+        if (NaSciezce(path_val)) {
+           last_curve = LEFT;
+           break;
+        }
+        TextOut(0,0,"LEWO");
+      }
+      if (NaSciezce(path_val)) break;
+      i = 0;
+      for (i; i<time_to_search; i++)  {
+        OnFwd(OUT_B, 0); OnRev(OUT_C, A);
+        TextOut(0,0,"COFAM");
+      }
+      i = 0;
+      for (i; i<time_to_search; i++) {
+        OnFwd(OUT_B, A); OnFwd(OUT_C, 0);
+        if (NaSciezce(path_val)) {
+           last_curve = RIGHT;
+           break;
+        }
+        TextOut(0,0,"PRAWO");
+      }
+      if (NaSciezce(path_val)) break;
+
+   }
+
+ } while(true);
+
+}
