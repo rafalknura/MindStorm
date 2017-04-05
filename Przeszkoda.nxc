@@ -1,0 +1,75 @@
+#define FREE 20
+#define OBROT 3000
+#define SZUKAJ 5000
+task main()
+{
+  SetSensorUltrasonic(IN_4);
+  while(true)  // jedz do przodu
+  {
+     Wait(500);
+     ClearScreen();
+     NumOut(0,0, SensorUS(IN_4));
+     if(SensorUS(IN_4)>FREE) OnFwd(OUT_BC, 75);
+     else {Off(OUT_BC); break;}
+  } //while jedz do przodu
+  int BOX=1;
+  int i=0;
+  int COUNT=0;
+  do
+  {
+
+     for(i=0; i<OBROT; i++) {OnRev(OUT_B, 50); OnFwd(OUT_C, 50);}
+     Off(OUT_BC); Wait(500);
+     for(i=0; i<SZUKAJ; i++) OnFwd(OUT_BC, 75);
+     Off(OUT_BC); Wait(500);
+     COUNT++;
+     for(i=0; i<OBROT; i++) {OnFwd(OUT_B, 50); OnRev(OUT_C, 50);}
+     Off(OUT_BC); Wait(500);
+     if(SensorUS(IN_4)>FREE)
+     {
+        TextOut(0,0,"Dotarlem do ifa");
+        Wait(500);
+        for(i=0; i<OBROT; i++) {OnRev(OUT_B, 50); OnFwd(OUT_C, 50);}
+        Off(OUT_BC); Wait(500);
+        for(i=0; i<(SZUKAJ/3); i++) OnFwd(OUT_BC, 75);
+        Off(OUT_BC); Wait(500);
+        for(i=0; i<OBROT; i++) {OnFwd(OUT_B, 50); OnRev(OUT_C, 50);}
+        Off(OUT_BC); Wait(500);
+        BOX=0;
+     }
+  }while(BOX)
+  
+  for(i=0; i<SZUKAJ; i++) OnFwd(OUT_BC, 75); Off(OUT_BC); Wait(500);
+  for(i=0; i<OBROT; i++) {OnFwd(OUT_B, 50); OnRev(OUT_C, 50);}
+  Off(OUT_BC); Wait(500);
+  BOX=1;
+  do //jazda wzdloz boku pudelka
+  {
+
+     for(i=0; i<OBROT; i++) {OnRev(OUT_B, 50); OnFwd(OUT_C, 50);}
+     Off(OUT_BC);  Wait(500);
+     for(i=0; i<SZUKAJ; i++) OnFwd(OUT_BC, 75);
+     Off(OUT_BC);  Wait(500);
+     for(i=0; i<OBROT; i++) {OnFwd(OUT_B, 50); OnRev(OUT_C, 50);}
+     Off(OUT_BC); Wait(500);
+     if(SensorUS(IN_4)>2*FREE)
+     {
+        TextOut(0,0,"Dotarlem do ifa");
+        Wait(500);
+        for(i=0; i<OBROT; i++) {OnRev(OUT_B, 50);  OnFwd(OUT_C, 50);}
+        Off(OUT_BC); Wait(500);
+        for(i=0; i<(SZUKAJ/3); i++) OnFwd(OUT_BC, 75);
+        Off(OUT_BC); Wait(500);
+        for(i=0; i<OBROT; i++) {OnFwd(OUT_B, 50);  OnRev(OUT_C, 50);}
+        Off(OUT_B);  Wait(500);
+        BOX=0;
+     }
+  }while(BOX)
+  
+  for(i=0; i<((COUNT*SZUKAJ)+(SZUKAJ/3)); i++) OnFwd(OUT_BC, 75);
+  Off(OUT_BC); Wait(500);
+  for(i=0; i<OBROT; i++) {OnFwd(OUT_C, 50); OnRev(OUT_B, 50);}
+  Off(OUT_BC);  Wait(500);
+  for(i=0; i<5000; i++) OnFwd(OUT_BC, 75); Off(OUT_BC);
+
+} //task
