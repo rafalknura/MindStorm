@@ -1,0 +1,94 @@
+int MOVE = 500;
+int sensorValueBuffor = 5;
+
+bool objectIsCloser(int sensorValue) {
+     return SensorUS(IN_4) < sensorValue;
+}
+
+bool objectIsFurther(int sensorValue) {
+     return SensorUS(IN_4) > sensorValue;
+}
+
+void moveForward() {
+     int x = 0;
+     for (x=0; x<MOVE; x++) {
+         OnFwd(OUT_BC, 75);
+     }
+}
+
+void moveBackward() {
+     int x = 0;
+     for (x=0; x<MOVE; x++) {
+         OnRev(OUT_BC, 75);
+     }
+}
+
+void turnHeadRight() {
+     RotateMotor(OUT_A, 20, 60);
+}
+
+void turnHeadLeft() {
+     RotateMotor(OUT_A, -20, 60);
+}
+
+void run(int sensorValue) {
+   while(true) {
+     if(SensorUS(IN_4) != sensorValue) {
+       turnHeadRight();
+       turnHeadLeft();
+
+       if(objectIsCloser(sensorValue)) {
+         moveBackward();
+         sensorValue = SensorUS(IN_4);
+       }
+       if (objectIsFurther(sensorValue)) {
+         moveForward();
+         sensorValue = SensorUS(IN_4);
+       }
+     }
+   } // end of while
+}
+
+task main() {
+   SetSensorUltrasonic(IN_4);
+   int sensorValue = SensorUS(IN_4);
+   
+   while(true) {
+     turnHeadRight();
+     sensorValue = SensorUS(IN_4);
+     Wait(500);
+     if (sensorValue < SensorUS(IN_4)) {
+        RotateMotor(OUT_C, 50, 480);
+        turnHeadLeft();
+        break;
+     }
+     turnHeadLeft();
+     sensorValue = SensorUS(IN_4);
+     Wait(500);
+     if (sensorValue < SensorUS(IN_4)) {
+        sensorValue = SensorUS(IN_4);
+        PlaySound("snd");
+        break;
+     }
+     turnHeadLeft();
+     sensorValue = SensorUS(IN_4);
+     Wait(500);
+     if (sensorValue < SensorUS(IN_4)) {
+        RotateMotor(OUT_B, 50, 480);
+        turnHeadRight();
+        sensorValue = SensorUS(IN_4);
+        break;
+     }
+     turnHeadRight();
+      sensorValue = SensorUS(IN_4);
+      Wait(500);
+     if (sensorValue < SensorUS(IN_4)) {
+        sensorValue = SensorUS(IN_4);
+        PlaySound("snd");
+        break;
+     }
+   }
+   
+    //run(sensorValue);
+
+}
