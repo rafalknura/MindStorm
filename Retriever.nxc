@@ -1,0 +1,150 @@
+/*README
+
+RETRIEVER
+I wersja programu
+
+Przeszukiwanie po liniach rownoleglych do jednego z bokow OBSZARU
+
+Parametry do optymalizacji:
+
+*/
+
+#define ML OUT_A    //Motor Left
+#define MR OUT_B    //Motor Right
+#define MU OUT_C    //Motor Up
+#define US IN_1     //Distance Sensing
+#define CS IN_2     //Colour Sensing
+
+#define SearchAngle 20 // mam nadzieje ze do cosinusa tutaj wpisuje sie stopnie (20 stopni= 0.349 radianow)
+#define DT20  (Tab[3]*(1/cos(SearchAngle)))
+#define DT40  (Tab[3]*(1/cos(2*SearchAngle)))
+#define DT60  (Tab[3]*(1/cos(3*SearchAngle)))
+
+#define Free 25 //wartoœæ graniczna zbli¿ania do œciany lub obiektu
+#define FwdPath 720 //droga (w stopniach) któr¹ przeje¿d¿a Retriever miêdzy przeszukiwaniami
+#define FwdPathPwr 75
+
+#define RotDiff 30 //akceptowalna ró¿nica drogi miêdzy ko³ami (w stopniach)
+
+#define TURNVALUE (5*360) //ile ma sie obrocic kolo po zewnetrznej aby obrocic robota o 180 stopni
+
+//liczniki obrotow motorow (Left, Right)
+int cML=0, cMR=0;
+
+int GoFwd(void);
+int Search(void);
+void Setup(void);
+int SearchComparison(int Tab[]);
+
+
+int GoFwd(void)
+{
+   //JedŸ do przodu o wartoœæ FwdPath chyba ¿e napotkasz przeszkode
+   ResetRotationCount(ML); ResetRotationCount(MR);
+   while(MotorRotationCount(ML)<FwdPath)
+   {
+     OnFwd(MR, FwdPathPwr);  OnFwd(MR, FwdPathPwr);
+     if(MotorRotationCount(ML)>(MotorRotationCount(MR)+RotDiff)||
+        MotorRotationCount(ML)<(MotorRotationCount(MR)-RotDiff))
+        {
+           Off(ML); Off(MR);
+           cML=MotorRotationCount(ML); cMR=MotorRotationCount(MR);
+           if(cML>cMR) RotateMotor(ML, 75, (cMR-cML));
+           if(cML<cMR) RotateMotor(ML, 75, (cML-cMR));
+           OnFwd(MR, FwdPathPwr);  OnFwd(MR, FwdPathPwr);
+        }//koniec if
+      if(SensorUS(US)<Free)
+        {
+          if(Search()==1) return 1; //œciana
+          else if(Search()==2) return 2; //obiekt
+        }//koniec if
+      if(SensorUS(US)>=Free) return 0;
+   }//koniec while
+}//koniec GoFwd
+
+int SearchComparison(int Tab[]) //podejrzewam ze w tej funkcji bedzie najwiecej bledow
+{
+   int i=0;
+
+   if(((DT20-5)<Tab[4])  && (Tab[4]<(DT20+5))  &&
+      ((DT40-10)<Tab[5]) && (Tab[5]<(DT40+10)) &&
+      ((DT60-20)<Tab[6]) && (Tab[6]<(DT60+20)) &&
+      ((DT20-5)<Tab[2])  && (Tab[2]<(DT20+5))  &&
+      ((DT40-10)<Tab[1]) && (Tab[1]<(DT40+10)) &&
+      ((DT60-20)<Tab[0]) && (Tab[0]<(DT60+20))) return 1;  //znalazlem sciane
+
+   else if(((DT20-5)>Tab[4])||
+      ((DT40-10)>Tab[5])    ||
+      ((DT60-20)>Tab[6])    ||
+      ((DT20-5)>Tab[2])     ||
+      ((DT40-10)>Tab[1])    ||
+      ((DT60-20)>Tab[0])) return  2; //znalazlem obiekt
+
+   else TextOut(0,0,"nie wiem co znalazlem");
+   Wait(1000);
+}
+
+int Search(void)
+{
+   int i, Tab[7];
+
+   for(i=0; i<3; i++)
+   {
+      RotateMotor(ML, 50, SearchAngle);
+      Wait(250);
+      Tab[4+i]=SensorUS(US);
+      Wait(250);
+   }
+
+   RotateMotor(ML, 50, ((-3)*SearchAngle));
+   Wait(250);
+   Tab[3]=SensorUS(US);
+   Wait(250);
+
+   for(i=0; i<3; i++)
+   {
+      RotateMotor(MR, 50, SearchAngle);
+      Wait(250);
+      Tab[2-i]=SensorUS(US);
+      Wait(250);
+   }
+
+   RotateMotor(MR, 50, ((-3)*SearchAngle));
+
+   if(SearchComparison(Tab)==1) return 1; //œciana
+
+   if(SearchComparison(Tab)==2) return 2; //obiekt
+}
+
+void Setup(void)
+{
+  SetSensorUltrasonic(US);
+  SetSensorLight(CS);
+}
+
+void TurnL(void)
+{
+  Off(ML); Off(MR);
+  RotateMotor(MR, 50, TURNVALUE);
+
+}
+
+void TurnR(void)
+{
+  Off(ML); Off(MR);
+  RotateMotor(ML, 50, TURNVALUE);
+}
+
+task main()
+{
+  int Tab[], temp;
+
+  while(1) //wykonuj w nieskonczonej petli
+  {
+     temp=GoFwd();
+     if(temp==0) continue;
+     if(temp==1) TurnL(); //na razie zeby zobaczyc jak zadziala bedzie jezdzil w kolko od sciany do sciany
+     if(temp==2) break;
+  }
+
+}
