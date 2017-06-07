@@ -1,0 +1,111 @@
+task MoveStop();
+task MoveFwd();
+task ProxAlarm();
+
+int Search();
+int Identify();
+
+int WALL = 1;
+int OBSTACLE = 2;
+
+int Tab[7];
+
+int Search()
+{
+
+  int i=0;
+  
+  Wait(1000);
+  int angle_sum = 0;
+  for(i=0; i<3; i++)
+  {
+     int angle = (150-(i*30));
+     angle_sum += angle;
+     RotateMotor(OUT_A, 50, angle);
+     Wait(1000);
+     Tab[4+i]=SensorUS(IN_1);
+  }
+
+  RotateMotor(OUT_A, -50, angle_sum);
+  Wait(1000);
+  Tab[3]=SensorUS(IN_1);
+
+  for(i=0; i<3; i++)
+  {
+     RotateMotor(OUT_B, 50, (150-(i*30)));
+     Wait(1000);
+     Tab[2-i]=SensorUS(IN_1);
+  }
+  
+  RotateMotor(OUT_B, -50, angle_sum);
+  string test = "";
+  for(i=0; i<4; i++)
+  {
+    test += NumToStr(Tab[i]);
+    test += ",";
+
+  }
+  ClearScreen();
+  TextOut(0,20,test);
+  //Wait(5000);
+  test = "";
+  for(i=4; i<7; i++)
+  {
+    test += NumToStr(Tab[i]);
+    test += ",";
+  }
+   //ClearScreen();
+  TextOut(0,0,test);
+  Wait(5000);
+  return 0;
+}
+
+int Wall1(int tab[])
+{
+  if(tab[1]>tab[5]) return (tab[1]-tab[5]);
+  else if(tab[5]>tab[1])return (tab[5]-tab[1]);
+  else return 0;
+}
+
+int Wall2(int tab[])
+{
+  int deg=70;     //deg zalezy od obrotu robota podczas funkcji search
+  if(((tab[1]*Cos(deg))>tab[3]) && (((tab[1]*Cos(deg))-tab[3])<100)) return WALL;
+  else if (((tab[1]*Cos(deg))<tab[3]) && (tab[3]-((tab[1]*Cos(deg)))<100)) return WALL;
+  else return OBSTACLE;
+}
+
+int IdentifyWall(int tab[])
+{
+  if(Wall1(tab)<10) return Wall2(tab);
+}
+
+task MoveFwd()
+{
+   //RotateMotorExPID(OUT_AB, 75, 1800, 0, true, true, 64, 32, 32);
+   OnFwdSyncPID(OUT_AB, 75, 0, 64, 32, 32);
+}
+
+task ProxAlarm()
+{
+   while(SensorUS(IN_1)>20);
+   ExitTo(MoveStop);
+}
+
+task MoveStop()
+{
+  OffEx(OUT_AB, RESET_ALL);
+  Off(OUT_AB);
+  Search();
+  int object = IdentifyWall(Tab);
+  if(object==WALL) TextOut(0,0,"znlazlem sciane");
+  else if(object==OBSTACLE) TextOut(0,0,"trafilem na przeszkode");
+  Wait(2000);
+}
+
+
+task main()
+{
+SetSensorUltrasonic(IN_1);
+Precedes(ProxAlarm, MoveFwd);
+}
