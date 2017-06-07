@@ -1,0 +1,49 @@
+int wanted_color;
+int color_buffor = 5;
+int COLOR = IN_4;
+
+void set_color() {
+     SetSensorColorRed(COLOR);
+     //SetSensorColorFull(IN_4);
+     // TODO: obczaiæ ReadSensorColorRaw
+     ResetSensor(COLOR);
+     TextOut(0, 0, "Begin with: " + NumToStr(Sensor(COLOR)));
+     Wait(1000);
+     PlaySound(SOUND_DOUBLE_BEEP);
+     int i = 0;
+     int colors = 0;
+     int samples_amount = 500;
+     for (i = 0; i < samples_amount; i++) {
+         Wait(10);
+         int current_color = Sensor(COLOR);
+         colors += current_color; // color sensor
+         TextOut(0, 10, "Current: " + NumToStr(current_color));
+     }
+     wanted_color = colors / samples_amount;
+     Wait(1000);
+     PlaySound(SOUND_DOUBLE_BEEP);
+     TextOut(0, 30, "Wanted color: " + NumToStr(wanted_color));
+     Wait(5000);
+}
+
+int wanted_color_min() {
+    return wanted_color - color_buffor;
+}
+
+int wanted_color_max() {
+    return wanted_color + color_buffor;
+}
+
+bool get_current_color() {
+     Wait(10);
+     return Sensor(COLOR);
+}
+
+bool color_matches() {
+    int color_value = get_current_color();
+    return wanted_color_min() < color_value < wanted_color_max();
+}
+
+task main() {
+     set_color();
+}
