@@ -37,7 +37,12 @@ int IfEmpty(int i, int prox)
 
 int gamma(int R, int r, int a, int prox, int i, int retang) //wylicza kat obrotu kol, tak dobrany zeby robot obrocil sie o okreslona wartosc
 {
-  return ((R/r)*(acos((a+prox)/(a+prox+2+(i*4)))-retang));
+ float r_R = (R/r);
+ int aa = (a+prox);
+ int bb = (a+prox+2+(i*4));
+ float a_b = aa/bb;
+
+  return (r_R*(Acos(a_b)-retang));
 }
 
 int IfWall(int Tab[])
