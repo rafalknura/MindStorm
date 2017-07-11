@@ -3,27 +3,14 @@ int color_buffor = 5;
 int COLOR = IN_4;
 
 void set_color() {
-     SetSensorColorRed(COLOR);
-     //SetSensorColorFull(IN_4);
-     // TODO: obczaiæ ReadSensorColorRaw
+     SetSensorColorBlue(COLOR);
      ResetSensor(COLOR);
-     TextOut(0, 0, "Begin with: " + NumToStr(Sensor(COLOR)));
      Wait(1000);
      PlaySound(SOUND_DOUBLE_BEEP);
-     int i = 0;
-     int colors = 0;
-     int samples_amount = 500;
-     for (i = 0; i < samples_amount; i++) {
-         Wait(10);
-         int current_color = Sensor(COLOR);
-         colors += current_color; // color sensor
-         TextOut(0, 10, "Current: " + NumToStr(current_color));
-     }
-     wanted_color = colors / samples_amount;
+     wanted_color = Sensor(COLOR);
      Wait(1000);
      PlaySound(SOUND_DOUBLE_BEEP);
-     TextOut(0, 30, "Wanted color: " + NumToStr(wanted_color));
-     Wait(5000);
+     Wait(1000);
 }
 
 int wanted_color_min() {
@@ -40,10 +27,19 @@ bool get_current_color() {
 }
 
 bool color_matches() {
-    int color_value = get_current_color();
-    return wanted_color_min() < color_value < wanted_color_max();
+    int current_color_value = get_current_color();
+    //TextOut(0, 10, "Wanted: " + NumToStr(wanted_color));
+    //TextOut(0, 30, "Current: " + NumToStr(current_color_value));
+    //Wait(2000);
+    return (current_color_value > wanted_color_min())&&(current_color_value< wanted_color_max());
 }
 
 task main() {
      set_color();
+     Wait(1000);
+     if (color_matches()) {
+        PlaySound(SOUND_UP);
+     } else {
+        PlaySound(SOUND_DOWN);
+     }
 }
