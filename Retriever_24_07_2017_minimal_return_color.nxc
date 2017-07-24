@@ -1,0 +1,170 @@
+//Prologue-to-mechanical-functions-------------------------------------------
+int WALL=1, OBJECT=2, Back_track=0;
+
+#define ANGLE 250
+#define US IN_1
+#define PROX 20
+#define TURN_A 1400
+#define TURN_B 1400
+#define BT_Fwd_Val 720
+
+//Color-Functions-------------------------------------------------------------
+int wanted_color;
+int color_buffor = 5;
+int COLOR = IN_4;
+
+void set_color() {
+     SetSensorColorBlue(COLOR);
+     ResetSensor(COLOR);
+     Wait(1000);
+     PlaySound(SOUND_DOUBLE_BEEP);
+     wanted_color = Sensor(COLOR);
+     Wait(1000);
+     PlaySound(SOUND_DOUBLE_BEEP);
+     Wait(1000);
+}
+
+int wanted_color_min() {
+    return wanted_color - color_buffor;
+}
+
+int wanted_color_max() {
+    return wanted_color + color_buffor;
+}
+
+bool get_current_color() {
+     Wait(10);
+     return Sensor(COLOR);
+}
+
+bool color_matches() {
+    int current_color_value = get_current_color();
+    //TextOut(0, 10, "Wanted: " + NumToStr(wanted_color));
+    //TextOut(0, 30, "Current: " + NumToStr(current_color_value));
+    //Wait(2000);
+    return (current_color_value > wanted_color_min())&&(current_color_value< wanted_color_max());
+}
+
+//Mechanical-Functions----------------------------------------------------------
+
+void MoveFwd(void)
+{
+   OnFwdSync(OUT_AB, 75, 0);
+}
+
+int CheckObject(void)
+{
+   Wait(500);
+   RotateMotor(OUT_A, 50, ANGLE);
+   Wait(500);
+   int R=SensorUS(US);
+   RotateMotor(OUT_A, 50, (-1)*ANGLE);
+   RotateMotor(OUT_B, 50, ANGLE);
+   Wait(500);
+   int L=SensorUS(US);
+   RotateMotor(OUT_B, 50, (-1)*ANGLE);
+   if(-2<L-R<2)
+   {
+     if((L>(PROX+5))||(R>(PROX+5))) return OBJECT;
+     else return WALL;
+   }
+   else return WALL;
+}
+
+int ProxAlert(void)
+{
+   while(SensorUS(US)>PROX)
+   {
+     Wait(100);
+   }
+   OffEx(OUT_AB, 0);
+   return CheckObject();
+}
+
+void TurnR(void)
+{
+  RotateMotor(OUT_A, 50, TURN_A);
+  Back_track++;
+}
+
+void TurnL(void)
+{
+  RotateMotor(OUT_B, 50, TURN_B);
+  Back_track++;
+}
+
+int Grab(void)
+{
+  PlaySound(SOUND_CLICK);
+
+  OnFwdSync(OUT_AB, 20, 0);
+  Wait(1500);
+  Off(OUT_AB);
+
+  OnFwd(OUT_C, 50);
+  Wait(500);
+  Off(OUT_C);
+
+  OnRevSync(OUT_AB, 20, 0);
+  Wait(1500);
+  Off(OUT_AB);
+
+  //if(20<SensorUS(US)<40) {PlaySound(SOUND_CLICK); return 1;}
+  //else return 0;
+  
+  return 0;
+}
+
+void BackTrackFunc(int BT)
+{
+   if((BT%2)==0) RotateMotor(OUT_A, 50, TURN_A/2);
+   else RotateMotor(OUT_B, 50, TURN_B/2);
+   
+   RotateMotorEx(OUT_AB, 75, BT*BT_Fwd_Val, 0, TRUE, TRUE);
+   
+   RotateMotor(OUT_A, 50, TURN_A/2);
+   
+   OnFwdSync(OUT_AB, 75, 0);
+
+   Wait(2000);
+   Off(OUT_AB);
+}
+
+//MAIN-Function--------------------------------------------------------------
+
+task main()
+{
+   SetSensorUltrasonic(IN_1);
+   
+   set_color();
+   Wait(1000);
+   
+   while(1)
+   {
+     MoveFwd();
+     int WO=ProxAlert();
+     if(WO==WALL) TurnL();
+     else if(WO==OBJECT) {TextOut(0,0, "OBJEKT"); Grab(); break;}
+     MoveFwd();
+     WO=ProxAlert();
+     if(WO==WALL) TurnR();
+     else if(WO==OBJECT) {TextOut(0,0, "OBJEKT"); Grab(); break;}
+   }
+
+   Wait(1000);
+   
+   if (color_matches())
+   {
+     PlaySound(SOUND_UP);
+   }
+   else
+   {
+     PlaySound(SOUND_DOWN);
+   }
+   
+   Wait(1000);
+   
+   BackTrackFunc(Back_track);
+   
+   Wait(5000);
+}
